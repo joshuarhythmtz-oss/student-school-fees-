@@ -1,0 +1,6 @@
+{
+  "name": "STUDENT SCHOOL FEES",
+  "description": "School Fee Management System for tracking student fee records, payments, outstanding balances, installment schedules, elimination deadlines, renewals, and financial reporting.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
