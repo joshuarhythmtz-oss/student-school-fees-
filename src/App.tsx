@@ -324,7 +324,7 @@ export default function App() {
     <div className="min-h-screen bg-slate-100 dark:bg-[#080808] text-slate-900 dark:text-zinc-100 flex flex-col font-sans antialiased selection:bg-emerald-500 selection:text-black transition-colors duration-200">
       {/* Toast message banner */}
       {toastMessage && (
-        <div className="fixed bottom-5 right-5 z-50 animate-in fade-in slide-in-from-bottom-5 duration-200">
+        <div className="fixed bottom-5 right-5 z-50 animate-in fade-in slide-in-from-bottom-5 duration-200 print:hidden">
           <div
             className={`px-4 py-3 rounded-xl shadow-2xl border flex items-center gap-2.5 text-xs font-bold ${
               toastMessage.type === 'success'
@@ -347,29 +347,31 @@ export default function App() {
       )}
 
       {/* Main Top Navigation */}
-      <Navbar
-        activeTeacher={activeTeacher}
-        teachers={teachers}
-        settings={settings}
-        students={students}
-        periods={periods}
-        theme={theme}
-        onToggleTheme={toggleTheme}
-        onSwitchTeacher={handleSwitchTeacher}
-        onOpenRegisterStudent={() => setIsRegisterModalOpen(true)}
-        onOpenRecordPayment={() => {
-          setPaymentTargetStudent(null);
-          setIsPaymentModalOpen(true);
-        }}
-        onOpenAcademicPeriod={() => setIsAcademicPeriodModalOpen(true)}
-        onOpenBackupModal={() => setIsBackupModalOpen(true)}
-        onOpenAuthModal={() => setIsAuthModalOpen(true)}
-        onSelectStudent={student => setSelectedStudentForProfile(student)}
-        onFilterCategory={cat => setCurrentCategory(cat)}
-      />
+      <div className="print:hidden">
+        <Navbar
+          activeTeacher={activeTeacher}
+          teachers={teachers}
+          settings={settings}
+          students={students}
+          periods={periods}
+          theme={theme}
+          onToggleTheme={toggleTheme}
+          onSwitchTeacher={handleSwitchTeacher}
+          onOpenRegisterStudent={() => setIsRegisterModalOpen(true)}
+          onOpenRecordPayment={() => {
+            setPaymentTargetStudent(null);
+            setIsPaymentModalOpen(true);
+          }}
+          onOpenAcademicPeriod={() => setIsAcademicPeriodModalOpen(true)}
+          onOpenBackupModal={() => setIsBackupModalOpen(true)}
+          onOpenAuthModal={() => setIsAuthModalOpen(true)}
+          onSelectStudent={student => setSelectedStudentForProfile(student)}
+          onFilterCategory={cat => setCurrentCategory(cat)}
+        />
+      </div>
 
       {/* Main Content Area */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 print:hidden">
         {/* Dashboard 7 Key Metrics Cards */}
         <DashboardStats
           students={classStudents}
@@ -399,7 +401,7 @@ export default function App() {
       </main>
 
       {/* System Footer */}
-      <footer className="bg-white dark:bg-[#0b0f19] border-t border-slate-200 dark:border-slate-800/80 py-6 mt-12 text-xs text-slate-500 dark:text-slate-400 transition-colors">
+      <footer className="bg-white dark:bg-[#0b0f19] border-t border-slate-200 dark:border-slate-800/80 py-6 mt-12 text-xs text-slate-500 dark:text-slate-400 transition-colors print:hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 rounded-lg bg-emerald-600 flex items-center justify-center text-white font-bold text-xs">
