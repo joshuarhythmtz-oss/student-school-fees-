@@ -60,6 +60,8 @@ export interface Student {
   address?: string;
   className: string;
   academicYear: string;
+  enrollmentMonth?: number; // 1 = January, 6 = June, etc.
+  enrollmentMonthName?: string; // e.g. "June"
   totalFees: number;
   amountPaid: number;
   outstandingBalance: number;
@@ -74,12 +76,15 @@ export interface Student {
 
 export interface TeacherAccount {
   id: string;
-  fullName: string;
-  email: string;
+  fullName: string; // Teacher's Full Name
+  email: string; // Teacher's login email
+  schoolEmail?: string; // School's official email for receipts
+  schoolName: string;
+  schoolAddress?: string;
+  poBox?: string;
+  phone?: string; // School / Teacher Phone Number
   password?: string;
   className: string; // e.g. "Form 2 A"
-  schoolName: string;
-  phone?: string;
   role: 'teacher' | 'head_teacher' | 'bursar';
   createdAt: string;
 }
@@ -88,8 +93,9 @@ export interface SchoolSettings {
   schoolName: string;
   motto: string;
   address: string;
+  poBox?: string;
   phone: string;
-  email: string;
+  email: string; // School official email
   currency: string; // e.g. "TZS", "USD", "KES", "UGX"
   currentAcademicYear: string; // e.g. "2026/2027"
   eliminationWarningDays: number; // default 10 days

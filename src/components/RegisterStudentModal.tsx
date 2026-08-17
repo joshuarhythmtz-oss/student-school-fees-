@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   X,
   UserPlus,
@@ -9,7 +9,8 @@ import {
   Mail,
   MapPin,
   FileText,
-  AlertCircle
+  AlertCircle,
+  Clock
 } from 'lucide-react';
 import { Student, SchoolSettings, TeacherAccount, Installment } from '../types';
 import { formatCurrency, generateAdmissionNumber } from '../utils/formatters';
@@ -41,6 +42,7 @@ export const RegisterStudentModal: React.FC<RegisterStudentModalProps> = ({
   const [fullName, setFullName] = useState('');
   const [admissionNo, setAdmissionNo] = useState(defaultAdmissionNo);
   const [gender, setGender] = useState<'Male' | 'Female'>('Male');
+  const [enrollmentMonth, setEnrollmentMonth] = useState<number>(1);
   const [parentName, setParentName] = useState('');
   const [parentPhone, setParentPhone] = useState('+255 ');
   const [parentEmail, setParentEmail] = useState('');
@@ -48,8 +50,44 @@ export const RegisterStudentModal: React.FC<RegisterStudentModalProps> = ({
   const [totalFees, setTotalFees] = useState<number>(1000000);
   const [amountPaid, setAmountPaid] = useState<number>(0);
   const [eliminationDeadline, setEliminationDeadline] = useState(in30Days);
-  const [planType, setPlanType] = useState<'termly' | 'monthly' | 'custom'>('termly');
+  const [planType, setPlanType] = useState<'termly' | 'monthly'>('termly');
   const [notes, setNotes] = useState('');
+
+  const monthOptionsEn = [
+    { value: 1, label: 'Month 1 - January (Start of Academic Year)' },
+    { value: 2, label: 'Month 2 - February' },
+    { value: 3, label: 'Month 3 - March' },
+    { value: 4, label: 'Month 4 - April' },
+    { value: 5, label: 'Month 5 - May (Term 2 Start)' },
+    { value: 6, label: 'Month 6 - June (Mid-Year)' },
+    { value: 7, label: 'Month 7 - July' },
+    { value: 8, label: 'Month 8 - August' },
+    { value: 9, label: 'Month 9 - September (Term 3 Start)' },
+    { value: 10, label: 'Month 10 - October' },
+    { value: 11, label: 'Month 11 - November' },
+    { value: 12, label: 'Month 12 - December (End of Year)' },
+  ];
+
+  const monthOptionsSw = [
+    { value: 1, label: 'Mwezi 1 - Januari (Mwanzo wa Mwaka wa Masomo)' },
+    { value: 2, label: 'Mwezi 2 - Februari' },
+    { value: 3, label: 'Mwezi 3 - Machi' },
+    { value: 4, label: 'Mwezi 4 - Aprili' },
+    { value: 5, label: 'Mwezi 5 - Mei (Mwanzo wa Muhula wa 2)' },
+    { value: 6, label: 'Mwezi 6 - Juni (Katikati ya Mwaka)' },
+    { value: 7, label: 'Mwezi 7 - Julai' },
+    { value: 8, label: 'Mwezi 8 - Agosti' },
+    { value: 9, label: 'Mwezi 9 - Septemba (Mwanzo wa Muhula wa 3)' },
+    { value: 10, label: 'Mwezi 10 - Oktoba' },
+    { value: 11, label: 'Mwezi 11 - Novemba' },
+    { value: 12, label: 'Mwezi 12 - Desemba (Mwisho wa Mwaka)' },
+  ];
+
+  const monthNames = language === 'sw'
+    ? ['Januari', 'Februari', 'Machi', 'Aprili', 'Mei', 'Juni', 'Julai', 'Agosti', 'Septemba', 'Oktoba', 'Novemba', 'Desemba']
+    : ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
+  const monthOptions = language === 'sw' ? monthOptionsSw : monthOptionsEn;
 
   // Automatically calculate outstanding balance
   const outstandingBalance = Math.max(0, (totalFees || 0) - (amountPaid || 0));
@@ -63,22 +101,40 @@ export const RegisterStudentModal: React.FC<RegisterStudentModalProps> = ({
       return;
     }
 
-    // Generate installment structure based on total fees and plan type
+    // Generate installment structure based on total fees, plan type, and enrollment month
     let installments: Installment[] = [];
     const fees = Number(totalFees) || 1000000;
     const initialPaid = Number(amountPaid) || 0;
     let alloc = initialPaid;
+    const startM = Number(enrollmentMonth) || 1;
 
     if (planType === 'termly') {
-      const term1Amount = Math.round(fees * 0.4);
-      const term2Amount = Math.round(fees * 0.35);
-      const term3Amount = fees - term1Amount - term2Amount;
+      let terms: { name: string; amount: number; due: string }[] = [];
 
-      const terms = [
-        { name: language === 'sw' ? 'Muhula 1 (Jan - Apr)' : 'Term 1 (Jan - Apr)', amount: term1Amount, due: '2026-01-30' },
-        { name: language === 'sw' ? 'Muhula 2 (Mei - Ago)' : 'Term 2 (May - Aug)', amount: term2Amount, due: '2026-05-30' },
-        { name: language === 'sw' ? 'Muhula 3 (Sep - Des)' : 'Term 3 (Sep - Dec)', amount: term3Amount, due: '2026-09-30' },
-      ];
+      if (startM <= 4) {
+        // Enrolled during Term 1: All 3 terms
+        const t1 = Math.round(fees * 0.4);
+        const t2 = Math.round(fees * 0.35);
+        const t3 = fees - t1 - t2;
+        terms = [
+          { name: language === 'sw' ? 'Muhula 1 (Jan - Apr)' : 'Term 1 (Jan - Apr)', amount: t1, due: '2026-01-30' },
+          { name: language === 'sw' ? 'Muhula 2 (Mei - Ago)' : 'Term 2 (May - Aug)', amount: t2, due: '2026-05-30' },
+          { name: language === 'sw' ? 'Muhula 3 (Sep - Des)' : 'Term 3 (Sep - Dec)', amount: t3, due: '2026-09-30' },
+        ];
+      } else if (startM <= 8) {
+        // Enrolled mid-year (Term 2): 2 terms only
+        const t2 = Math.round(fees * 0.55);
+        const t3 = fees - t2;
+        terms = [
+          { name: language === 'sw' ? 'Muhula 2 (Mei - Ago)' : 'Term 2 (May - Aug)', amount: t2, due: '2026-05-30' },
+          { name: language === 'sw' ? 'Muhula 3 (Sep - Des)' : 'Term 3 (Sep - Dec)', amount: t3, due: '2026-09-30' },
+        ];
+      } else {
+        // Enrolled late year (Term 3): 1 term only
+        terms = [
+          { name: language === 'sw' ? 'Muhula 3 (Sep - Des)' : 'Term 3 (Sep - Dec)', amount: fees, due: '2026-09-30' },
+        ];
+      }
 
       installments = terms.map((term, idx) => {
         let paid = 0;
@@ -103,14 +159,18 @@ export const RegisterStudentModal: React.FC<RegisterStudentModalProps> = ({
         };
       });
     } else {
-      // Monthly 10 installments
-      const monthlyAmount = Math.round(fees / 10);
-      const monthsEn = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct'];
-      const monthsSw = ['Jan', 'Feb', 'Mac', 'Apr', 'Mei', 'Jun', 'Jul', 'Ago', 'Sep', 'Okt'];
-      const months = language === 'sw' ? monthsSw : monthsEn;
+      // Monthly installments starting from enrollmentMonth through December (Month 12)
+      const remainingMonthsCount = 12 - startM + 1;
+      const count = Math.max(1, remainingMonthsCount);
+      const monthlyAmount = Math.round(fees / count);
 
-      installments = months.map((m, idx) => {
-        const amt = idx === 9 ? fees - monthlyAmount * 9 : monthlyAmount;
+      const generatedMonths: number[] = [];
+      for (let m = startM; m <= 12; m++) {
+        generatedMonths.push(m);
+      }
+
+      installments = generatedMonths.map((mNum, idx) => {
+        const amt = idx === generatedMonths.length - 1 ? fees - monthlyAmount * (count - 1) : monthlyAmount;
         let paid = 0;
         let status: 'paid' | 'partial' | 'unpaid' = 'unpaid';
         if (alloc >= amt) {
@@ -122,11 +182,12 @@ export const RegisterStudentModal: React.FC<RegisterStudentModalProps> = ({
           alloc = 0;
           status = 'partial';
         }
+        const mLabel = monthNames[mNum - 1];
         return {
           id: `inst-m-${Date.now()}-${idx}`,
-          name: language === 'sw' ? `Awamu ya ${m}` : `${m} Installment`,
+          name: language === 'sw' ? `Awamu ya ${mLabel}` : `${mLabel} Installment`,
           amountDue: amt,
-          dueDate: `2026-${String(idx + 1).padStart(2, '0')}-28`,
+          dueDate: `2026-${String(mNum).padStart(2, '0')}-28`,
           status,
           paidAmount: paid,
           paidDate: paid > 0 ? new Date().toISOString().split('T')[0] : undefined,
@@ -138,6 +199,8 @@ export const RegisterStudentModal: React.FC<RegisterStudentModalProps> = ({
       admissionNo: admissionNo.trim(),
       fullName: fullName.trim(),
       gender,
+      enrollmentMonth: Number(enrollmentMonth),
+      enrollmentMonthName: monthNames[Number(enrollmentMonth) - 1],
       parentName: parentName.trim(),
       parentPhone: parentPhone.trim(),
       parentEmail: parentEmail.trim(),
@@ -202,7 +265,7 @@ export const RegisterStudentModal: React.FC<RegisterStudentModalProps> = ({
                   placeholder={t.fullNamePlaceholder}
                   value={fullName}
                   onChange={e => setFullName(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 rounded-lg text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500 focus:outline-hidden"
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 rounded-lg text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500 focus:outline-hidden font-medium"
                 />
               </div>
 
@@ -215,7 +278,7 @@ export const RegisterStudentModal: React.FC<RegisterStudentModalProps> = ({
                   required
                   value={admissionNo}
                   onChange={e => setAdmissionNo(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 rounded-lg text-slate-800 dark:text-slate-100 font-mono focus:ring-2 focus:ring-emerald-500 focus:outline-hidden"
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 rounded-lg text-slate-800 dark:text-slate-100 font-mono focus:ring-2 focus:ring-emerald-500 focus:outline-hidden font-bold"
                 />
               </div>
 
@@ -224,11 +287,38 @@ export const RegisterStudentModal: React.FC<RegisterStudentModalProps> = ({
                 <select
                   value={gender}
                   onChange={e => setGender(e.target.value as any)}
-                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 rounded-lg text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500 focus:outline-hidden cursor-pointer"
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 rounded-lg text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500 focus:outline-hidden cursor-pointer font-medium"
                 >
                   <option value="Male">{t.genderMale}</option>
                   <option value="Female">{t.genderFemale}</option>
                 </select>
+              </div>
+
+              {/* Enrollment Month Selector */}
+              <div className="sm:col-span-2 bg-emerald-50/60 dark:bg-emerald-950/30 p-3 rounded-xl border border-emerald-200 dark:border-emerald-900">
+                <label className="block text-xs font-bold text-emerald-950 dark:text-emerald-300 mb-1 flex items-center gap-1.5">
+                  <Clock className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                  <span>{t.enrollmentMonthLabel || 'Enrollment Month (Start Schedule)'}</span> <span className="text-rose-500">*</span>
+                </label>
+                <select
+                  value={enrollmentMonth}
+                  onChange={e => setEnrollmentMonth(Number(e.target.value))}
+                  className="w-full px-3 py-2 border border-emerald-300 dark:border-emerald-800 bg-white dark:bg-slate-900 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:outline-hidden cursor-pointer font-semibold"
+                >
+                  {monthOptions.map(opt => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-[11px] text-emerald-800 dark:text-emerald-400 mt-1 font-medium">
+                  {t.enrollmentMonthHint || 'The fee installment schedule will start from this selected month onward.'}
+                  {enrollmentMonth > 1 && (
+                    <span className="block font-bold mt-0.5 text-emerald-700 dark:text-emerald-300">
+                      ✓ {language === 'sw' ? `Ratiba itaanza mwezi wa ${monthNames[enrollmentMonth - 1]} hadi mwisho wa mwaka bila madeni ya miezi ya nyuma.` : `Schedule starts from ${monthNames[enrollmentMonth - 1]} to end of year without ghost historical debts.`}
+                    </span>
+                  )}
+                </p>
               </div>
             </div>
           </div>
@@ -347,10 +437,10 @@ export const RegisterStudentModal: React.FC<RegisterStudentModalProps> = ({
                 <select
                   value={planType}
                   onChange={e => setPlanType(e.target.value as any)}
-                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 rounded-lg text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500 focus:outline-hidden cursor-pointer"
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 rounded-lg text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500 focus:outline-hidden cursor-pointer font-medium"
                 >
-                  <option value="termly">{t.planTermly}</option>
-                  <option value="monthly">{t.planMonthly}</option>
+                  <option value="termly">{t.planTermly} ({language === 'sw' ? 'Kulingana na Muhula wa Kujiunga' : 'Based on Enrollment Term'})</option>
+                  <option value="monthly">{t.planMonthly} ({language === 'sw' ? 'Kuanzia Mwezi Uliochaguliwa' : 'Starting from Chosen Month'})</option>
                 </select>
               </div>
 

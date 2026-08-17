@@ -276,6 +276,14 @@ export const StudentProfileModal: React.FC<StudentProfileModalProps> = ({
                       <span className="text-slate-400 dark:text-slate-500">{t.regDate}:</span>
                       <p className="font-semibold text-slate-800 dark:text-slate-200">{formatDate(student.registrationDate)}</p>
                     </div>
+                    {student.enrollmentMonthName && (
+                      <div className="col-span-2">
+                        <span className="text-slate-400 dark:text-slate-500">{t.enrollmentMonthLabel || 'Enrollment Month'}:</span>
+                        <p className="font-semibold text-emerald-600 dark:text-emerald-400">
+                          {student.enrollmentMonthName} ({language === 'sw' ? `Mwezi ${student.enrollmentMonth}` : `Month ${student.enrollmentMonth}`})
+                        </p>
+                      </div>
+                    )}
                     <div className="col-span-2">
                       <span className="text-slate-400 dark:text-slate-500">{t.eliminationDeadlineLabel}:</span>
                       <p className={`font-semibold ${isPendingElim ? 'text-amber-600 dark:text-amber-400 font-bold' : 'text-slate-800 dark:text-slate-200'}`}>

@@ -81,20 +81,20 @@ export const Navbar: React.FC<NavbarProps> = ({
         <div className="flex items-center justify-between h-18">
           {/* Logo & School Header */}
           <div className="flex items-center space-x-3">
-            <div className="w-11 h-11 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-400 flex items-center justify-center shadow-md shadow-emerald-950/40 text-white">
+            <div className="w-11 h-11 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-400 flex items-center justify-center shadow-md shadow-emerald-950/40 text-white shrink-0">
               <School className="w-6 h-6" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="font-bold text-lg tracking-tight text-white flex items-center gap-1.5">
-                  {t.appTitle}
+                <span className="font-bold text-base sm:text-lg tracking-tight text-white flex items-center gap-1.5 uppercase font-sans">
+                  {settings.schoolName || activeTeacher.schoolName || t.appTitle}
                 </span>
                 <span className="hidden md:inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
                   {currentPeriod?.name || `${t.academicYear} 2026`}
                 </span>
               </div>
               <p className="text-xs text-slate-400 font-medium truncate max-w-xs sm:max-w-md">
-                {settings.schoolName}
+                {t.appTitle} • <span className="text-emerald-400 font-semibold">{activeTeacher.className}</span> ({activeTeacher.fullName})
               </p>
             </div>
           </div>

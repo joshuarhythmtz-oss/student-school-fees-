@@ -103,10 +103,13 @@ export function generateAdmissionNumber(count: number): string {
 }
 
 /**
- * Converts numbers into English words for receipts (e.g. 400,000 -> Four Hundred Thousand TZS Only)
+ * Converts numbers into English words for receipts (e.g. 350,000 -> Three Hundred and Fifty Thousand Tanzanian Shillings Only)
  */
-export function numberToWords(num: number, currency: string = 'Tanzanian Shillings'): string {
-  if (num === 0) return `Zero ${currency} Only`;
+export function numberToWords(num: number, currencyCode: string = 'TZS'): string {
+  if (!num || num === 0) {
+    const curr = currencyCode === 'TZS' ? 'Tanzanian Shillings' : currencyCode === 'USD' ? 'US Dollars' : currencyCode;
+    return `Zero ${curr} Only`;
+  }
 
   const a = [
     '', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten',
@@ -115,13 +118,26 @@ export function numberToWords(num: number, currency: string = 'Tanzanian Shillin
   const b = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
 
   function inWords(n: number): string {
+    if (n === 0) return '';
     if (n < 20) return a[n];
-    if (n < 100) return b[Math.floor(n / 10)] + (n % 10 !== 0 ? ' ' + a[n % 10] : '');
-    if (n < 1000) return a[Math.floor(n / 100)] + ' Hundred' + (n % 100 !== 0 ? ' and ' + inWords(n % 100) : '');
-    if (n < 1000000) return inWords(Math.floor(n / 1000)) + ' Thousand' + (n % 1000 !== 0 ? ' ' + inWords(n % 1000) : '');
-    if (n < 1000000000) return inWords(Math.floor(n / 1000000)) + ' Million' + (n % 1000000 !== 0 ? ' ' + inWords(n % 1000000) : '');
-    return inWords(Math.floor(n / 1000000000)) + ' Billion' + (n % 1000000000 !== 0 ? ' ' + inWords(n % 1000000000) : '');
+    if (n < 100) return (b[Math.floor(n / 10)] + (n % 10 !== 0 ? ' ' + a[n % 10] : '')).trim();
+    if (n < 1000) return (a[Math.floor(n / 100)] + ' Hundred' + (n % 100 !== 0 ? ' and ' + inWords(n % 100) : '')).trim();
+    if (n < 1000000) return (inWords(Math.floor(n / 1000)) + ' Thousand' + (n % 1000 !== 0 ? ' ' + inWords(n % 1000) : '')).trim();
+    if (n < 1000000000) return (inWords(Math.floor(n / 1000000)) + ' Million' + (n % 1000000 !== 0 ? ' ' + inWords(n % 1000000) : '')).trim();
+    return (inWords(Math.floor(n / 1000000000)) + ' Billion' + (n % 1000000000 !== 0 ? ' ' + inWords(n % 1000000000) : '')).trim();
   }
 
-  return `${inWords(Math.floor(num))} ${currency} Only`;
+  const currencyName =
+    currencyCode === 'TZS'
+      ? 'Tanzanian Shillings'
+      : currencyCode === 'USD'
+      ? 'US Dollars'
+      : currencyCode === 'KES'
+      ? 'Kenyan Shillings'
+      : currencyCode === 'UGX'
+      ? 'Ugandan Shillings'
+      : currencyCode;
+
+  const words = inWords(Math.floor(Math.abs(num))).trim();
+  return `${words} ${currencyName} Only`;
 }

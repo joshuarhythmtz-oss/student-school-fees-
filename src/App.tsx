@@ -137,12 +137,35 @@ export default function App() {
   const handleTeacherLogin = (teacher: TeacherAccount) => {
     setActiveTeacherId(teacher.id);
     setActiveTeacher(teacher);
+    if (teacher.schoolName) {
+      const updatedSettings: SchoolSettings = {
+        ...settings,
+        schoolName: teacher.schoolName,
+        address: teacher.schoolAddress || settings.address,
+        poBox: teacher.poBox || settings.poBox,
+        phone: teacher.phone || settings.phone,
+        email: teacher.schoolEmail || settings.email,
+      };
+      saveSettings(updatedSettings);
+      setSettings(updatedSettings);
+    }
     showToast(`Welcome back, ${teacher.fullName}! Accessing ${teacher.className}`, 'success');
   };
 
   // Teacher Registration
   const handleTeacherRegister = (teacherData: Omit<TeacherAccount, 'id' | 'createdAt'>) => {
     const newTeacher = registerTeacher(teacherData);
+    // Update school settings with registered school details
+    const updatedSettings: SchoolSettings = {
+      ...settings,
+      schoolName: newTeacher.schoolName,
+      address: newTeacher.schoolAddress || settings.address,
+      poBox: newTeacher.poBox || settings.poBox,
+      phone: newTeacher.phone || settings.phone,
+      email: newTeacher.schoolEmail || newTeacher.email,
+    };
+    saveSettings(updatedSettings);
+    setSettings(updatedSettings);
     setTeachers(loadTeachers());
     setActiveTeacher(newTeacher);
     showToast(`Teacher account created for ${newTeacher.fullName} (${newTeacher.className})`, 'success');

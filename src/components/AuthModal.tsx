@@ -4,12 +4,13 @@ import {
   User,
   Lock,
   Mail,
-  GraduationCap,
-  KeyRound,
+  School,
+  Building,
+  MapPin,
+  Phone,
+  BookOpen,
   CheckCircle2,
-  ArrowRight,
-  ShieldCheck,
-  School
+  Inbox
 } from 'lucide-react';
 import { TeacherAccount, SchoolSettings } from '../types';
 import { useLanguage } from '../context/LanguageContext';
@@ -45,17 +46,20 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [loginPassword, setLoginPassword] = useState('');
   const [loginError, setLoginError] = useState('');
 
-  // Register form state
-  const [regFullName, setRegFullName] = useState('');
-  const [regEmail, setRegEmail] = useState('');
-  const [regPassword, setRegPassword] = useState('');
-  const [regClassName, setRegClassName] = useState('Form 2 C');
-  const [regPhone, setRegPhone] = useState('+255 754 ');
+  // Register form state (All requested fields)
+  const [teacherFullName, setTeacherFullName] = useState('');
+  const [schoolName, setSchoolName] = useState(settings.schoolName || '');
+  const [schoolAddress, setSchoolAddress] = useState(settings.address || '');
+  const [poBox, setPoBox] = useState(settings.poBox || 'P.O. Box 1420, Moshi');
+  const [schoolPhone, setSchoolPhone] = useState(settings.phone || '+255 754 123 456');
+  const [teacherEmail, setTeacherEmail] = useState('');
+  const [schoolEmail, setSchoolEmail] = useState(settings.email || '');
+  const [assignedClass, setAssignedClass] = useState('Form 2 C');
+  const [password, setPassword] = useState('');
 
   // Forgot password form state
   const [forgotEmail, setForgotEmail] = useState('');
   const [forgotStep, setForgotStep] = useState<'request' | 'verify' | 'done'>('request');
-  const [resetCode, setResetCode] = useState('');
   const [newPassword, setNewPassword] = useState('');
 
   const handleLoginSubmit = (e: React.FormEvent) => {
@@ -65,12 +69,20 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       teacher => teacher.email.toLowerCase() === loginEmail.toLowerCase().trim()
     );
     if (!found) {
-      setLoginError(language === 'sw' ? 'Hakuna akaunti ya mwalimu iliyosajiliwa na barua pepe hii.' : 'No teacher account registered with this email address.');
+      setLoginError(
+        language === 'sw'
+          ? 'Hakuna akaunti ya mwalimu iliyosajiliwa na barua pepe hii.'
+          : 'No teacher account registered with this email address.'
+      );
       return;
     }
-    // Password check
+    // Password check (accepts saved password or standard default)
     if (found.password && found.password !== loginPassword && loginPassword !== 'password123') {
-      setLoginError(language === 'sw' ? 'Nenosiri si sahihi. (Nenosiri la majaribio ni password123)' : 'Invalid password. (Hint: default demo password is password123)');
+      setLoginError(
+        language === 'sw'
+          ? 'Nenosiri si sahihi. (Nenosiri la majaribio ni password123)'
+          : 'Invalid password. (Hint: default demo password is password123)'
+      );
       return;
     }
     onLogin(found);
@@ -79,18 +91,25 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
   const handleRegisterSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!regFullName.trim() || !regEmail.trim() || !regClassName.trim() || !regPassword.trim()) {
-      alert(language === 'sw' ? 'Tafadhali jaza sehemu zote zinazohitajika.' : 'Please fill all required registration fields.');
+    if (!teacherFullName.trim() || !teacherEmail.trim() || !schoolName.trim() || !assignedClass.trim() || !password.trim()) {
+      alert(
+        language === 'sw'
+          ? 'Tafadhali jaza sehemu zote zinazohitajika za usajili.'
+          : 'Please fill in all required registration fields.'
+      );
       return;
     }
 
     onRegister({
-      fullName: regFullName.trim(),
-      email: regEmail.trim().toLowerCase(),
-      password: regPassword,
-      className: regClassName.trim(),
-      schoolName: settings.schoolName,
-      phone: regPhone.trim(),
+      fullName: teacherFullName.trim(),
+      email: teacherEmail.trim().toLowerCase(),
+      schoolEmail: schoolEmail.trim().toLowerCase() || teacherEmail.trim().toLowerCase(),
+      schoolName: schoolName.trim(),
+      schoolAddress: schoolAddress.trim(),
+      poBox: poBox.trim(),
+      phone: schoolPhone.trim(),
+      className: assignedClass.trim(),
+      password,
       role: 'teacher',
     });
 
@@ -113,20 +132,33 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
       <div
-        className="bg-white dark:bg-[#0f172a] rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 w-full max-w-md max-h-[92vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150 transition-colors"
+        className="bg-white dark:bg-[#0f172a] rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 w-full max-w-lg max-h-[92vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150 transition-colors"
         onClick={e => e.stopPropagation()}
       >
         {/* Top Header */}
         <div className="p-5 bg-slate-900 dark:bg-[#090d16] text-white flex items-start justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-600 flex items-center justify-center text-white font-bold">
+            <div className="w-10 h-10 rounded-xl bg-emerald-600 flex items-center justify-center text-white font-bold shrink-0">
               <School className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-white">{t.teacherPortalTitle}</h2>
-              <p className="text-xs text-slate-300 dark:text-slate-400">
-                {settings.schoolName}
-              </p>
+              <h2 className="text-base font-bold text-white">
+                {mode === 'register'
+                  ? (language === 'sw' ? 'Usajili wa Mwalimu & Shule' : 'Teacher & School Registration')
+                  : t.teacherPortalTitle}
+              </h2>
+              {/* Do not render hardcoded school name when registering a new teacher */}
+              {mode !== 'register' ? (
+                <p className="text-xs text-slate-300 dark:text-slate-400">
+                  {settings.schoolName}
+                </p>
+              ) : (
+                <p className="text-xs text-emerald-400 font-medium">
+                  {language === 'sw'
+                    ? 'Sajili akaunti ya mwalimu na uweke taarifa za shule yako'
+                    : 'Register teacher profile and establish school identity'}
+                </p>
+              )}
             </div>
           </div>
           <button
@@ -269,84 +301,192 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
           {/* 2. REGISTER MODE */}
           {mode === 'register' && (
-            <form onSubmit={handleRegisterSubmit} className="space-y-3">
+            <form onSubmit={handleRegisterSubmit} className="space-y-3.5">
+              {/* Teacher Identity */}
               <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  {t.fullName} <span className="text-rose-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. Madam Grace Mbelwa"
-                  value={regFullName}
-                  onChange={e => setRegFullName(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 rounded-lg text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500 focus:outline-hidden"
-                />
-              </div>
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">
+                  {language === 'sw' ? '1. Taarifa za Mwalimu' : "1. Teacher's Personal Identity"}
+                </h3>
+                <div className="space-y-2.5">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                      {t.teacherFullName} <span className="text-rose-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <User className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                      <input
+                        type="text"
+                        required
+                        placeholder={t.teacherFullNamePlaceholder || "e.g. Madam Amina Mwamba"}
+                        value={teacherFullName}
+                        onChange={e => setTeacherFullName(e.target.value)}
+                        className="w-full pl-9 pr-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 rounded-lg text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500 focus:outline-hidden"
+                      />
+                    </div>
+                  </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  {t.officialEmailLabel} <span className="text-rose-500">*</span>
-                </label>
-                <input
-                  type="email"
-                  required
-                  placeholder="grace@kilimanjaro.edu"
-                  value={regEmail}
-                  onChange={e => setRegEmail(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 rounded-lg text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500 focus:outline-hidden"
-                />
-              </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                        {t.emailInput} <span className="text-rose-500">*</span>
+                      </label>
+                      <div className="relative">
+                        <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                        <input
+                          type="email"
+                          required
+                          placeholder="teacher@school.edu"
+                          value={teacherEmail}
+                          onChange={e => setTeacherEmail(e.target.value)}
+                          className="w-full pl-9 pr-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 rounded-lg text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500 focus:outline-hidden"
+                        />
+                      </div>
+                      <span className="text-[10px] text-slate-400 mt-0.5 block">
+                        {language === 'sw' ? 'Inatumika kuingilia mfumo' : 'Used exclusively to log in'}
+                      </span>
+                    </div>
 
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                    {t.assignedClass} <span className="text-rose-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. Form 2 C"
-                    value={regClassName}
-                    onChange={e => setRegClassName(e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 rounded-lg text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500 focus:outline-hidden font-semibold"
-                  />
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                        {t.assignedClassName} <span className="text-rose-500">*</span>
+                      </label>
+                      <div className="relative">
+                        <BookOpen className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                        <input
+                          type="text"
+                          required
+                          placeholder="e.g. Form 2 A"
+                          value={assignedClass}
+                          onChange={e => setAssignedClass(e.target.value)}
+                          className="w-full pl-9 pr-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 rounded-lg text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500 focus:outline-hidden font-medium"
+                        />
+                      </div>
+                    </div>
+                  </div>
                 </div>
+              </div>
 
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                    {t.phone}
-                  </label>
-                  <input
-                    type="tel"
-                    placeholder="+255 754 000 111"
-                    value={regPhone}
-                    onChange={e => setRegPhone(e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 rounded-lg text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500 focus:outline-hidden"
-                  />
+              {/* School Identity */}
+              <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">
+                  {language === 'sw' ? '2. Taarifa za Shule' : '2. School Institutional Details'}
+                </h3>
+
+                <div className="space-y-2.5">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                      {t.schoolNameInput} <span className="text-rose-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <Building className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                      <input
+                        type="text"
+                        required
+                        placeholder={t.schoolNamePlaceholder}
+                        value={schoolName}
+                        onChange={e => setSchoolName(e.target.value)}
+                        className="w-full pl-9 pr-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 rounded-lg text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500 focus:outline-hidden uppercase font-semibold text-xs"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                        {t.schoolAddressInput}
+                      </label>
+                      <div className="relative">
+                        <MapPin className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                        <input
+                          type="text"
+                          placeholder={t.schoolAddressPlaceholder}
+                          value={schoolAddress}
+                          onChange={e => setSchoolAddress(e.target.value)}
+                          className="w-full pl-9 pr-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 rounded-lg text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500 focus:outline-hidden"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                        {t.poBoxInput}
+                      </label>
+                      <div className="relative">
+                        <Inbox className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                        <input
+                          type="text"
+                          placeholder={t.poBoxPlaceholder}
+                          value={poBox}
+                          onChange={e => setPoBox(e.target.value)}
+                          className="w-full pl-9 pr-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 rounded-lg text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500 focus:outline-hidden"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                        {t.schoolPhoneInput}
+                      </label>
+                      <div className="relative">
+                        <Phone className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                        <input
+                          type="tel"
+                          placeholder={t.schoolPhonePlaceholder}
+                          value={schoolPhone}
+                          onChange={e => setSchoolPhone(e.target.value)}
+                          className="w-full pl-9 pr-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 rounded-lg text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500 focus:outline-hidden"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                        {t.schoolEmailInput}
+                      </label>
+                      <div className="relative">
+                        <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                        <input
+                          type="email"
+                          placeholder={t.schoolEmailPlaceholder}
+                          value={schoolEmail}
+                          onChange={e => setSchoolEmail(e.target.value)}
+                          className="w-full pl-9 pr-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 rounded-lg text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500 focus:outline-hidden"
+                        />
+                      </div>
+                      <span className="text-[10px] text-slate-400 mt-0.5 block">
+                        {language === 'sw' ? 'Inaonyeshwa kwenye risiti za wanafunzi' : 'Printed on official student receipts'}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              <div>
+              {/* Password & Submit */}
+              <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
                 <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                   {t.passwordLabel} <span className="text-rose-500">*</span>
                 </label>
-                <input
-                  type="password"
-                  required
-                  placeholder={language === 'sw' ? 'Tengeneza nenosiri imara' : 'Create secure password'}
-                  value={regPassword}
-                  onChange={e => setRegPassword(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 rounded-lg text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500 focus:outline-hidden"
-                />
+                <div className="relative">
+                  <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="password"
+                    required
+                    placeholder={language === 'sw' ? 'Tengeneza nenosiri imara' : 'Create secure password'}
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                    className="w-full pl-9 pr-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 rounded-lg text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500 focus:outline-hidden"
+                  />
+                </div>
               </div>
 
               <button
                 type="submit"
                 id="btn-register-teacher"
-                className="w-full py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md transition cursor-pointer mt-2"
+                className="w-full py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md transition cursor-pointer mt-3"
               >
-                {t.createTeacherAccountBtn}
+                {t.registerBtn}
               </button>
             </form>
           )}
@@ -358,7 +498,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 <button
                   type="button"
                   onClick={() => setMode('login')}
-                  className="text-xs text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
+                  className="text-xs text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 cursor-pointer"
                 >
                   ← {t.backToLogin}
                 </button>
